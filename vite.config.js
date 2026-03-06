@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
-  base: './',
-})
+  // Use relative paths for production (GitHub Pages), absolute for dev server
+  base: mode === 'production' ? './' : '/',
+}))
