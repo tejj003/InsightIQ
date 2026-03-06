@@ -83,6 +83,27 @@ Output is in `dist/`. Serve it with any static file host (Vercel, Netlify, GitHu
 npm run preview   # preview the production build locally
 ```
 
+### Deploy to GitHub Pages
+
+1. Build the project: `npm run build`
+2. Push the `dist/` folder to the `gh-pages` branch, or use the [gh-pages](https://www.npmjs.com/package/gh-pages) package:
+
+```bash
+npm install --save-dev gh-pages
+```
+
+Add to `package.json` scripts:
+```json
+"deploy": "npm run build && gh-pages -d dist"
+```
+
+Then run:
+```bash
+npm run deploy
+```
+
+> The app uses `HashRouter` so all routes work correctly on GitHub Pages without any server configuration (URLs look like `/#/projects/123`).
+
 ---
 
 ## Project Structure
