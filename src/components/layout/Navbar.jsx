@@ -205,7 +205,7 @@ function ApiKeyModal({ onClose }) {
                 Target URL <span className="normal-case text-text-secondary/60 font-normal">(optional)</span>
               </label>
               <input
-                type="url"
+                type="text"
                 value={urls[activeProvider]}
                 onChange={(e) => { setUrls((prev) => ({ ...prev, [activeProvider]: e.target.value })); setSaved(false) }}
                 placeholder={activeProvider === 'openai'
