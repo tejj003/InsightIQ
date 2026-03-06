@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "ux-researcher-designer": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "computedHash": "c710ba2b486644d58e305e2d5a2631d8b04bb04ff7cfb07529810c2326631bbb"
+    }
+  }
+}
