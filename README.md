@@ -85,24 +85,16 @@ npm run preview   # preview the production build locally
 
 ### Deploy to GitHub Pages
 
-1. Build the project: `npm run build`
-2. Push the `dist/` folder to the `gh-pages` branch, or use the [gh-pages](https://www.npmjs.com/package/gh-pages) package:
+This repo includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that builds and deploys automatically on every push to `main`.
 
-```bash
-npm install --save-dev gh-pages
-```
+**One-time setup in your GitHub repository:**
 
-Add to `package.json` scripts:
-```json
-"deploy": "npm run build && gh-pages -d dist"
-```
+1. Go to **Settings → Pages**
+2. Under **Source**, select **GitHub Actions**
+3. Push to `main` — the workflow runs automatically and your site will be live at:
+   `https://<your-username>.github.io/<repo-name>/`
 
-Then run:
-```bash
-npm run deploy
-```
-
-> The app uses `HashRouter` so all routes work correctly on GitHub Pages without any server configuration (URLs look like `/#/projects/123`).
+> The app uses `HashRouter` so all routes work correctly on GitHub Pages without any server configuration (URLs look like `https://you.github.io/repo/#/projects/123`).
 
 ---
 
