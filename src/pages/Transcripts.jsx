@@ -115,62 +115,67 @@ export default function Transcripts() {
   }
 
   return (
-    <div className="p-8 max-w-3xl animate-fade-in">
-      <h1 className="text-xl font-mono font-bold text-text-primary mb-1">Transcripts</h1>
-      <p className="text-sm font-mono text-text-secondary mb-8">
-        Paste interview transcripts to include them in your analysis.
-      </p>
+    <div className="h-full flex flex-col animate-fade-in">
+      {/* Page header */}
+      <div className="px-8 py-5 border-b border-border flex-shrink-0">
+        <h1 className="text-lg font-mono font-bold text-text-primary mb-0.5">Transcripts</h1>
+        <p className="text-xs font-mono text-text-secondary">Paste interview transcripts to include them in your analysis.</p>
+      </div>
 
-      {/* Upload form */}
-      <Card className="mb-8">
-        <h2 className="text-sm font-mono font-semibold text-text-primary mb-4">Add Transcript</h2>
-        <form onSubmit={handleAdd} className="flex flex-col gap-4">
-          <Input
-            label="Participant Label"
-            value={label}
-            onChange={(e) => { setLabel(e.target.value); setLabelError('') }}
-            placeholder="e.g. User 01 — Sarah"
-            error={labelError}
-          />
-          <Textarea
-            label="Transcript Text"
-            value={text}
-            onChange={(e) => { setText(e.target.value); setTextError('') }}
-            placeholder="Paste the interview transcript here…"
-            rows={8}
-            error={textError}
-          />
-          <div className="flex justify-end">
-            <Button type="submit">
+      {/* Two-column body */}
+      <div className="flex-1 overflow-hidden flex gap-0">
+        {/* Left: add form */}
+        <div className="w-[420px] flex-shrink-0 border-r border-border overflow-y-auto p-6">
+          <p className="text-xs font-mono font-semibold text-text-secondary uppercase tracking-wider mb-4">Add Transcript</p>
+          <form onSubmit={handleAdd} className="flex flex-col gap-4">
+            <Input
+              label="Participant Label"
+              value={label}
+              onChange={(e) => { setLabel(e.target.value); setLabelError('') }}
+              placeholder="e.g. User 01 — Sarah"
+              error={labelError}
+            />
+            <Textarea
+              label="Transcript Text"
+              value={text}
+              onChange={(e) => { setText(e.target.value); setTextError('') }}
+              placeholder="Paste the interview transcript here…"
+              rows={12}
+              error={textError}
+            />
+            <Button type="submit" className="w-full justify-center">
               <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
                 <path d="M8 2a.75.75 0 01.75.75v4.5h4.5a.75.75 0 010 1.5h-4.5v4.5a.75.75 0 01-1.5 0v-4.5h-4.5a.75.75 0 010-1.5h4.5v-4.5A.75.75 0 018 2z"/>
               </svg>
               Add Transcript
             </Button>
-          </div>
-        </form>
-      </Card>
+          </form>
+        </div>
 
-      {/* Transcript list */}
-      {transcripts.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-12 text-center">
-          <svg viewBox="0 0 64 64" fill="none" className="w-12 h-12 text-text-secondary/30">
-            <rect x="10" y="6" width="36" height="44" rx="3" stroke="currentColor" strokeWidth="2"/>
-            <path d="M18 18h20M18 26h20M18 34h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M40 38l8 8m0-8l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-          <p className="text-sm font-mono text-text-secondary">No transcripts yet. Add one above.</p>
+        {/* Right: transcript list */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {transcripts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-3 text-center pb-16">
+              <svg viewBox="0 0 64 64" fill="none" className="w-12 h-12 text-text-secondary/30">
+                <rect x="10" y="6" width="36" height="44" rx="3" stroke="currentColor" strokeWidth="2"/>
+                <path d="M18 18h20M18 26h20M18 34h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M40 38l8 8m0-8l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              <p className="text-sm font-mono text-text-secondary">No transcripts yet.</p>
+              <p className="text-xs font-mono text-text-secondary/50">Add your first transcript using the form.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-mono text-text-secondary uppercase tracking-wider mb-1">
+                {transcripts.length} Transcript{transcripts.length !== 1 ? 's' : ''}
+              </p>
+              {transcripts.map((t) => (
+                <TranscriptCard key={t.id} transcript={t} onDelete={handleDelete} />
+              ))}
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          <p className="text-xs font-mono text-text-secondary uppercase tracking-wider mb-1">
-            {transcripts.length} Transcript{transcripts.length !== 1 ? 's' : ''}
-          </p>
-          {transcripts.map((t) => (
-            <TranscriptCard key={t.id} transcript={t} onDelete={handleDelete} />
-          ))}
-        </div>
-      )}
+      </div>
     </div>
   )
 }

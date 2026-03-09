@@ -19,11 +19,11 @@ export default function ProjectLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col">
+    <div className="h-screen bg-bg flex flex-col overflow-hidden">
       <Navbar />
-      <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar project={project} onDelete={handleDelete} onRename={handleRename} />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-hidden">
           <Outlet context={{ project, update }} />
         </main>
       </div>

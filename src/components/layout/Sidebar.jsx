@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { classNames } from '../../lib/utils'
 import { useToast } from '../ui/Toast'
@@ -57,6 +57,16 @@ const navItems = [
     ),
   },
   {
+    id: 'report',
+    label: 'Report',
+    path: 'report',
+    icon: (
+      <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+        <path d="M3.75 2A1.75 1.75 0 002 3.75v10.5c0 .966.784 1.75 1.75 1.75h8.5A1.75 1.75 0 0014 14.25V6.414a1.75 1.75 0 00-.513-1.237L10.75 2.513A1.75 1.75 0 009.586 2H3.75zM3.5 3.75a.25.25 0 01.25-.25h5.586a.25.25 0 01.177.073l2.737 2.737a.25.25 0 01.073.177v7.763a.25.25 0 01-.25.25h-8.5a.25.25 0 01-.25-.25V3.75zM5 6.75a.75.75 0 000 1.5h6a.75.75 0 000-1.5H5zm0 2.5a.75.75 0 000 1.5h6a.75.75 0 000-1.5H5zm0 2.5a.75.75 0 000 1.5h4a.75.75 0 000-1.5H5z"/>
+      </svg>
+    ),
+  },
+  {
     id: 'ask',
     label: 'Ask InsightIQ',
     path: 'ask',
@@ -89,10 +99,23 @@ export default function Sidebar({ project, onDelete, onRename }) {
     toast.success('Project renamed.')
   }
 
+  const transcripts = project?.transcripts?.length ?? 0
+  const questions = project?.questions?.length ?? 0
+  const hasInsights = !!project?.insights
+
   return (
     <aside className="w-60 flex-shrink-0 border-r border-border bg-surface flex flex-col h-full">
-      {/* Project name */}
-      <div className="px-4 py-4 border-b border-border">
+      {/* Project header (merged with back link) */}
+      <div className="px-4 py-5 border-b border-border flex-shrink-0">
+        <Link
+          to="/"
+          className="flex items-center gap-1 text-xs font-mono text-text-secondary/60 hover:text-text-secondary transition-colors mb-2"
+        >
+          <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
+            <path fillRule="evenodd" d="M9.78 3.22a.75.75 0 010 1.06L6.56 7.5l3.22 3.22a.75.75 0 11-1.06 1.06L4.94 8.03a.75.75 0 010-1.06l3.78-3.78a.75.75 0 011.06 0z"/>
+          </svg>
+          All Projects
+        </Link>
         {renaming ? (
           <form onSubmit={handleRename} className="flex gap-2">
             <input
@@ -124,15 +147,22 @@ export default function Sidebar({ project, onDelete, onRename }) {
             end={item.path === ''}
             className={({ isActive }) =>
               classNames(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-mono transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                'relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-mono transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-accent',
                 isActive
-                  ? 'bg-accent-light text-accent'
+                  ? 'bg-accent-light text-accent font-medium'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface2'
               )
             }
           >
-            {item.icon}
-            {item.label}
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-accent rounded-r-full" />
+                )}
+                {item.icon}
+                {item.label}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
@@ -141,18 +171,18 @@ export default function Sidebar({ project, onDelete, onRename }) {
       <div className="px-2 py-3 border-t border-border flex flex-col gap-0.5">
         <button
           onClick={() => { setNewName(project?.name || ''); setRenaming(true) }}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-mono text-text-secondary hover:text-text-primary hover:bg-surface2 transition-all duration-150 w-full text-left"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-mono text-text-secondary hover:text-text-primary hover:bg-surface2 transition-all duration-150 w-full text-left"
         >
-          <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+          <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
             <path d="M11.013 1.427a1.75 1.75 0 012.474 0l1.086 1.086a1.75 1.75 0 010 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 01-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61zm1.414 1.06a.25.25 0 00-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 000-.354l-1.086-1.086zM11.189 6.25L9.75 4.81l-6.286 6.287a.25.25 0 00-.064.108l-.558 1.953 1.953-.558a.249.249 0 00.108-.064L11.189 6.25z"/>
           </svg>
-          Rename
+          Rename Project
         </button>
         <button
           onClick={handleDelete}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-mono text-red-400 hover:text-red-300 hover:bg-red-900/10 transition-all duration-150 w-full text-left"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-mono text-red-400/60 hover:text-red-400 hover:bg-red-900/10 transition-all duration-150 w-full text-left"
         >
-          <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+          <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
             <path d="M6.5 1.75a.25.25 0 01.25-.25h2.5a.25.25 0 01.25.25V3h-3V1.75zm4.5 0V3h2.25a.75.75 0 010 1.5H2.75a.75.75 0 010-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75zM4.496 6.675a.75.75 0 10-1.492.15l.66 6.6A1.75 1.75 0 005.405 15h5.19c.9 0 1.652-.681 1.741-1.576l.66-6.6a.75.75 0 00-1.492-.149l-.66 6.6a.25.25 0 01-.249.225H5.405a.25.25 0 01-.249-.225l-.66-6.6z"/>
           </svg>
           Delete Project

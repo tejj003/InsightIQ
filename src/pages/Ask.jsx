@@ -74,7 +74,12 @@ export default function Ask() {
     const systemPrompt = buildChatSystemPrompt({
       topic: project.topic,
       transcripts,
-      insights: project.insights,
+      insights: Object.values(project.insights || {}).length > 0 ? {
+        themes: Object.values(project.insights || {}).flatMap(fw => fw?.themes || []),
+        insights: Object.values(project.insights || {}).flatMap(fw => fw?.insights || []),
+        verbatims: Object.values(project.insights || {}).flatMap(fw => fw?.verbatims || []),
+        recommendations: Object.values(project.insights || {}).flatMap(fw => fw?.recommendations || []),
+      } : null,
     })
 
     const apiMessages = updatedHistory.map(({ role, content }) => ({ role, content }))
@@ -106,12 +111,14 @@ export default function Ask() {
   // No transcripts state
   if (transcripts.length === 0) {
     return (
-      <div className="p-8 max-w-3xl animate-fade-in">
-        <h1 className="text-xl font-mono font-bold text-text-primary mb-1">Ask InsightIQ</h1>
-        <p className="text-sm font-mono text-text-secondary mb-8">
-          Ask anything about your research. Answers are grounded in your transcripts.
-        </p>
-        <div className="flex flex-col items-center gap-4 py-16 text-center">
+      <div className="h-full flex flex-col animate-fade-in">
+        <div className="px-8 py-5 border-b border-border flex-shrink-0">
+          <h1 className="text-lg font-mono font-bold text-text-primary mb-0.5">Ask InsightIQ</h1>
+          <p className="text-xs font-mono text-text-secondary">
+            Ask anything about your research. Answers are grounded in your transcripts.
+          </p>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center pb-16">
           <svg viewBox="0 0 64 64" fill="none" className="w-14 h-14 text-text-secondary/30">
             <path d="M8 16a8 8 0 018-8h32a8 8 0 018 8v20a8 8 0 01-8 8H32l-12 8v-8h-4a8 8 0 01-8-8V16z" stroke="currentColor" strokeWidth="2"/>
             <path d="M20 28h24M20 20h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -131,15 +138,16 @@ export default function Ask() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-8 py-6 border-b border-border flex-shrink-0">
-        <h1 className="text-xl font-mono font-bold text-text-primary mb-1">Ask InsightIQ</h1>
-        <p className="text-sm font-mono text-text-secondary">
+      <div className="px-8 py-5 border-b border-border flex-shrink-0">
+        <h1 className="text-lg font-mono font-bold text-text-primary mb-0.5">Ask InsightIQ</h1>
+        <p className="text-xs font-mono text-text-secondary">
           Ask anything about your research. Answers are based on your transcripts.
         </p>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-5">
+      <div className="flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-5 items-center">
+        <div className="w-full max-w-3xl flex flex-col gap-5">
         {/* Starter questions shown before first message */}
         {chatHistory.length === 0 && !streamingContent && (
           <div className="flex flex-col items-center gap-4 py-8 animate-fade-in">
@@ -205,12 +213,13 @@ export default function Ask() {
           </div>
         )}
 
-        <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Input bar */}
       <div className="px-8 py-4 border-t border-border flex-shrink-0 bg-bg">
-        <div className="flex gap-3 items-end">
+        <div className="max-w-3xl mx-auto flex gap-3 items-end">
           <textarea
             ref={inputRef}
             value={input}
@@ -247,7 +256,7 @@ export default function Ask() {
             </Button>
           )}
         </div>
-        <p className="text-xs font-mono text-text-secondary mt-2">
+        <p className="max-w-3xl mx-auto text-xs font-mono text-text-secondary mt-2">
           Press <kbd className="px-1 py-0.5 bg-surface2 border border-border rounded text-xs">Enter</kbd> to send,{' '}
           <kbd className="px-1 py-0.5 bg-surface2 border border-border rounded text-xs">Shift+Enter</kbd> for new line
         </p>

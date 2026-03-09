@@ -15,12 +15,19 @@ export function getProvider() {
   return localStorage.getItem(AI_PROVIDER_KEY) || 'claude'
 }
 
+function sanitizeKey(key) {
+  // Strip any characters outside printable ASCII (32–126) — prevents the
+  // "non ISO-8859-1 code point" fetch header error caused by copy-paste artefacts
+  // eslint-disable-next-line no-control-regex
+  return (key || '').replace(/[^\x20-\x7E]/g, '').trim()
+}
+
 function getApiKey() {
   const provider = getProvider()
   if (provider === 'openai') {
-    return localStorage.getItem(OPENAI_API_KEY_STORAGE_KEY) || import.meta.env.VITE_OPENAI_API_KEY || ''
+    return sanitizeKey(localStorage.getItem(OPENAI_API_KEY_STORAGE_KEY) || import.meta.env.VITE_OPENAI_API_KEY || '')
   }
-  return localStorage.getItem(API_KEY_STORAGE_KEY) || import.meta.env.VITE_ANTHROPIC_API_KEY || ''
+  return sanitizeKey(localStorage.getItem(API_KEY_STORAGE_KEY) || import.meta.env.VITE_ANTHROPIC_API_KEY || '')
 }
 
 function getEndpointUrl(provider) {

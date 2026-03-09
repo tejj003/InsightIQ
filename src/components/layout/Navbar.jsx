@@ -43,7 +43,7 @@ const PROVIDERS = [
   },
 ]
 
-function ApiKeyModal({ onClose }) {
+export function ApiKeyModal({ onClose }) {
   const [activeProvider, setActiveProvider] = useState(getProvider)
   const [keys, setKeys] = useState({
     claude: localStorage.getItem(API_KEY_STORAGE_KEY) || '',

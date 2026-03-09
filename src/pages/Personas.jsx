@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useOutletContext, Link } from 'react-router-dom'
 import { useClaude } from '../hooks/useClaude'
 import { buildPersonasPrompt } from '../lib/prompts'
@@ -49,6 +49,7 @@ function parsePersonas(text) {
 
     const quoteMatch = block.match(/\*\*Quote:\*\*\s*"([^"]+)"/)
     const archetypeMatch = block.match(/\*\*Archetype:\*\*\s*(.+)/)
+    const confidenceMatch = block.match(/\*\*Confidence:\*\*\s*(High|Medium|Low)/i)
 
     const extractList = (sectionTitle) => {
       const regex = new RegExp(`### ${sectionTitle}\\s*([\\s\\S]*?)(?=###|---|$)`, 'i')
@@ -74,7 +75,9 @@ function parsePersonas(text) {
       fullName,
       quote: quoteMatch?.[1]?.trim() || '',
       archetype: archetypeMatch?.[1]?.trim() || 'Casual User',
+      confidence: confidenceMatch?.[1]?.trim() || null,
       demographics: extractDemographics(),
+      uniqueTraits: extractList('Top 5 Unique Traits'),
       motivations: extractList('Motivations'),
       goals: extractList('Goals'),
       frustrations: extractList('Frustrations'),
@@ -85,24 +88,92 @@ function parsePersonas(text) {
   return personas
 }
 
-function PersonaCard({ persona }) {
+function PersonaCard({ persona, onRename, onDelete }) {
   const style = getArchetypeStyle(persona.archetype)
   const initials = getInitials(persona.fullName)
   const [namePart, rolePart] = persona.fullName.split('—').map((s) => s.trim())
+  const [editing, setEditing] = useState(false)
+  const [editValue, setEditValue] = useState(persona.fullName)
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    if (editing) inputRef.current?.select()
+  }, [editing])
+
+  function commitRename() {
+    const trimmed = editValue.trim()
+    if (trimmed && trimmed !== persona.fullName) onRename(trimmed)
+    else setEditValue(persona.fullName)
+    setEditing(false)
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') commitRename()
+    if (e.key === 'Escape') { setEditValue(persona.fullName); setEditing(false) }
+  }
 
   return (
-    <Card className={`border-l-4 ${style.border} flex flex-col gap-5 animate-fade-in`}>
+    <Card className={`border-l-4 ${style.border} flex flex-col gap-5 animate-fade-in group/card`}>
       {/* Header */}
       <div className="flex items-start gap-4">
         <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-mono font-bold flex-shrink-0 ${style.avatar}`}>
           {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-mono font-bold text-text-primary leading-tight">{namePart}</h3>
+          {editing ? (
+            <input
+              ref={inputRef}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={handleKeyDown}
+              className="w-full bg-surface2 border border-accent rounded px-2 py-0.5 text-sm font-mono font-bold text-text-primary outline-none"
+            />
+          ) : (
+            <h3
+              className="text-sm font-mono font-bold text-text-primary leading-tight cursor-pointer hover:text-accent transition-colors"
+              title="Double-click to rename"
+              onDoubleClick={() => { setEditValue(persona.fullName); setEditing(true) }}
+            >
+              {namePart}
+            </h3>
+          )}
           {rolePart && <p className="text-xs font-mono text-text-secondary mt-0.5">{rolePart}</p>}
-          <div className="mt-1.5">
+          <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
             <Badge variant={style.badge}>{persona.archetype}</Badge>
+            {persona.confidence && (
+              <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${
+                persona.confidence === 'High'
+                  ? 'bg-success/10 text-success'
+                  : persona.confidence === 'Medium'
+                  ? 'bg-warning/10 text-warning'
+                  : 'bg-red-500/10 text-red-400'
+              }`}>
+                {persona.confidence} confidence
+              </span>
+            )}
           </div>
+        </div>
+        {/* Actions — visible on card hover */}
+        <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity flex-shrink-0">
+          <button
+            onClick={() => { setEditValue(persona.fullName); setEditing(true) }}
+            className="p-1.5 rounded text-text-secondary hover:text-text-primary hover:bg-surface2 transition-all"
+            title="Rename persona"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+              <path d="M11.013 1.427a1.75 1.75 0 012.474 0l1.086 1.086a1.75 1.75 0 010 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 01-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61zm1.414 1.06a.25.25 0 00-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 000-.354l-1.086-1.086zM11.189 6.25L9.75 4.81l-6.286 6.287a.25.25 0 00-.064.108l-.558 1.953 1.953-.558a.249.249 0 00.108-.064L11.189 6.25z"/>
+            </svg>
+          </button>
+          <button
+            onClick={onDelete}
+            className="p-1.5 rounded text-red-400/50 hover:text-red-400 hover:bg-red-900/10 transition-all"
+            title="Delete persona"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+              <path d="M6.5 1.75a.25.25 0 01.25-.25h2.5a.25.25 0 01.25.25V3h-3V1.75zm4.5 0V3h2.25a.75.75 0 010 1.5H2.75a.75.75 0 010-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75zM4.496 6.675a.75.75 0 10-1.492.15l.66 6.6A1.75 1.75 0 005.405 15h5.19c.9 0 1.652-.681 1.741-1.576l.66-6.6a.75.75 0 00-1.492-.149l-.66 6.6a.25.25 0 01-.249.225H5.405a.25.25 0 01-.249-.225l-.66-6.6z"/>
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -111,6 +182,20 @@ function PersonaCard({ persona }) {
         <blockquote className="border-l-2 border-border pl-3 italic text-xs font-mono text-text-secondary leading-relaxed">
           "{persona.quote}"
         </blockquote>
+      )}
+
+      {/* Top 5 Unique Traits */}
+      {persona.uniqueTraits?.length > 0 && (
+        <div className="rounded-lg border border-accent/20 bg-accent-light/10 px-4 py-3">
+          <p className="text-xs font-mono font-semibold text-accent uppercase tracking-wider mb-2">Top 5 Unique Traits</p>
+          <div className="flex flex-wrap gap-1.5">
+            {persona.uniqueTraits.slice(0, 5).map((trait, i) => (
+              <span key={i} className="text-xs font-mono bg-accent-light text-accent px-2.5 py-1 rounded-full">
+                {trait}
+              </span>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Demographics */}
@@ -201,6 +286,18 @@ export default function Personas() {
   const transcripts = project.transcripts || []
   const personas = project.personas || null
 
+  function handleRename(index, newFullName) {
+    const updated = personas.list.map((p, i) => i === index ? { ...p, fullName: newFullName } : p)
+    update({ personas: { ...personas, list: updated } })
+    toast.success('Persona renamed.')
+  }
+
+  function handleDelete(index) {
+    const updated = personas.list.filter((_, i) => i !== index)
+    update({ personas: { ...personas, list: updated } })
+    toast.success('Persona deleted.')
+  }
+
   async function handleGenerate() {
     if (transcripts.length === 0) return
     setStreamText('')
@@ -220,12 +317,14 @@ export default function Personas() {
   // No transcripts
   if (transcripts.length === 0) {
     return (
-      <div className="p-8 max-w-3xl animate-fade-in">
-        <h1 className="text-xl font-mono font-bold text-text-primary mb-1">User Personas</h1>
-        <p className="text-sm font-mono text-text-secondary mb-8">
-          AI-generated research personas built from your interview transcripts.
-        </p>
-        <div className="flex flex-col items-center gap-4 py-16 text-center">
+      <div className="h-full flex flex-col animate-fade-in">
+        <div className="px-8 py-5 border-b border-border flex-shrink-0">
+          <h1 className="text-lg font-mono font-bold text-text-primary mb-0.5">User Personas</h1>
+          <p className="text-xs font-mono text-text-secondary">
+            AI-generated research personas built from your interview transcripts.
+          </p>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center pb-16">
           <svg viewBox="0 0 64 64" fill="none" className="w-14 h-14 text-text-secondary/30">
             <circle cx="24" cy="20" r="10" stroke="currentColor" strokeWidth="2"/>
             <path d="M4 52c0-11 9-18 20-18s20 7 20 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -245,11 +344,11 @@ export default function Personas() {
   }
 
   return (
-    <div className="p-8 max-w-4xl animate-fade-in">
-      <div className="flex items-start justify-between mb-2">
+    <div className="h-full flex flex-col animate-fade-in">
+      <div className="px-8 py-5 border-b border-border flex-shrink-0 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-mono font-bold text-text-primary mb-1">User Personas</h1>
-          <p className="text-sm font-mono text-text-secondary">
+          <h1 className="text-lg font-mono font-bold text-text-primary mb-0.5">User Personas</h1>
+          <p className="text-xs font-mono text-text-secondary">
             Research-backed personas generated from your interview transcripts.
           </p>
         </div>
@@ -276,48 +375,57 @@ export default function Personas() {
         </div>
       </div>
 
-      {error && (
-        <div className="mt-4 p-3 rounded-lg bg-red-900/10 border border-red-500/20 text-sm font-mono text-red-400">
-          {error}
-        </div>
-      )}
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="max-w-5xl mx-auto">
+        {error && (
+          <div className="mb-4 p-3 rounded-lg bg-red-900/10 border border-red-500/20 text-sm font-mono text-red-400">
+            {error}
+          </div>
+        )}
 
-      {/* Streaming state */}
-      {loading && (
-        <div className="mt-8 flex flex-col gap-4">
-          <Spinner text="Building personas from your research…" />
-          {streamText && (
-            <div className="p-4 rounded-lg bg-surface border border-border text-xs font-mono text-text-secondary whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto">
-              {streamText}
-            </div>
-          )}
-        </div>
-      )}
+        {/* Streaming state */}
+        {loading && (
+          <div className="flex flex-col gap-4">
+            <Spinner text="Building personas from your research…" />
+            {streamText && (
+              <div className="p-4 rounded-lg bg-surface border border-border text-xs font-mono text-text-secondary whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto">
+                {streamText}
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* Empty state */}
-      {!loading && !personas && (
-        <div className="mt-16 flex flex-col items-center gap-4 text-center">
-          <svg viewBox="0 0 64 64" fill="none" className="w-14 h-14 text-text-secondary/30">
-            <circle cx="24" cy="20" r="10" stroke="currentColor" strokeWidth="2"/>
-            <path d="M4 52c0-11 9-18 20-18s20 7 20 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            <circle cx="46" cy="22" r="7" stroke="currentColor" strokeWidth="2"/>
-            <path d="M36 52c0-8 5-13 10-15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-          <p className="text-sm font-mono text-text-primary font-semibold">No personas yet</p>
-          <p className="text-xs font-mono text-text-secondary max-w-xs">
-            You have {transcripts.length} transcript{transcripts.length !== 1 ? 's' : ''}. Click "Generate Personas" to build research personas.
-          </p>
-        </div>
-      )}
+        {/* Empty state */}
+        {!loading && !personas && (
+          <div className="flex flex-col items-center gap-4 pt-16 text-center">
+            <svg viewBox="0 0 64 64" fill="none" className="w-14 h-14 text-text-secondary/30">
+              <circle cx="24" cy="20" r="10" stroke="currentColor" strokeWidth="2"/>
+              <path d="M4 52c0-11 9-18 20-18s20 7 20 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <circle cx="46" cy="22" r="7" stroke="currentColor" strokeWidth="2"/>
+              <path d="M36 52c0-8 5-13 10-15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <p className="text-sm font-mono text-text-primary font-semibold">No personas yet</p>
+            <p className="text-xs font-mono text-text-secondary max-w-xs">
+              You have {transcripts.length} transcript{transcripts.length !== 1 ? 's' : ''}. Click "Generate Personas" to build research personas.
+            </p>
+          </div>
+        )}
 
-      {/* Persona cards */}
-      {!loading && personas?.list?.length > 0 && (
-        <div className="mt-6 flex flex-col gap-6">
-          {personas.list.map((persona, i) => (
-            <PersonaCard key={i} persona={persona} />
-          ))}
+        {/* Persona cards */}
+        {!loading && personas?.list?.length > 0 && (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {personas.list.map((persona, i) => (
+              <PersonaCard
+                key={i}
+                persona={persona}
+                onRename={(name) => handleRename(i, name)}
+                onDelete={() => handleDelete(i)}
+              />
+            ))}
+          </div>
+        )}
         </div>
-      )}
+      </div>
     </div>
   )
 }

@@ -8,6 +8,7 @@ import Transcripts from './pages/Transcripts'
 import Insights from './pages/Insights'
 import Ask from './pages/Ask'
 import Personas from './pages/Personas'
+import Report from './pages/Report'
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="insights" element={<Insights />} />
         <Route path="personas" element={<Personas />} />
         <Route path="ask" element={<Ask />} />
+        <Route path="report" element={<Report />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
